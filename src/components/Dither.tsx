@@ -1,334 +1,470 @@
-/* eslint-disable react/no-unknown-property */
-import { useRef, useEffect, forwardRef } from 'react';
-import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
-import { EffectComposer, wrapEffect } from '@react-three/postprocessing';
-import { Effect } from 'postprocessing';
+import React, { useRef, useEffect, useState } from 'react';
 import * as THREE from 'three';
 
-import '../index.css';
-
-const waveVertexShader = `
-precision highp float;
-varying vec2 vUv;
-void main() {
-  vUv = uv;
-  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-  vec4 viewPosition = viewMatrix * modelPosition;
-  gl_Position = projectionMatrix * viewPosition;
-}
-`;
-
-const waveFragmentShader = `
-precision highp float;
-uniform vec2 resolution;
-uniform float time;
-uniform float waveSpeed;
-uniform float waveFrequency;
-uniform float waveAmplitude;
-uniform vec3 waveColor;
-uniform vec2 mousePos;
-uniform int enableMouseInteraction;
-uniform float mouseRadius;
-
-vec4 mod289(vec4 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
-vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
-vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-vec2 fade(vec2 t) { return t*t*t*(t*(t*6.0-15.0)+10.0); }
-
-float cnoise(vec2 P) {
-  vec4 Pi = floor(P.xyxy) + vec4(0.0,0.0,1.0,1.0);
-  vec4 Pf = fract(P.xyxy) - vec4(0.0,0.0,1.0,1.0);
-  Pi = mod289(Pi);
-  vec4 ix = Pi.xzxz;
-  vec4 iy = Pi.yyww;
-  vec4 fx = Pf.xzxz;
-  vec4 fy = Pf.yyww;
-  vec4 i = permute(permute(ix) + iy);
-  vec4 gx = fract(i * (1.0/41.0)) * 2.0 - 1.0;
-  vec4 gy = abs(gx) - 0.5;
-  vec4 tx = floor(gx + 0.5);
-  gx = gx - tx;
-  vec2 g00 = vec2(gx.x, gy.x);
-  vec2 g10 = vec2(gx.y, gy.y);
-  vec2 g01 = vec2(gx.z, gy.z);
-  vec2 g11 = vec2(gx.w, gy.w);
-  vec4 norm = taylorInvSqrt(vec4(dot(g00,g00), dot(g01,g01), dot(g10,g10), dot(g11,g11)));
-  g00 *= norm.x; g01 *= norm.y; g10 *= norm.z; g11 *= norm.w;
-  float n00 = dot(g00, vec2(fx.x, fy.x));
-  float n10 = dot(g10, vec2(fx.y, fy.y));
-  float n01 = dot(g01, vec2(fx.z, fy.z));
-  float n11 = dot(g11, vec2(fx.w, fy.w));
-  vec2 fade_xy = fade(Pf.xy);
-  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-  return 2.3 * mix(n_x.x, n_x.y, fade_xy.y);
+interface LightPillarProps {
+  topColor?: string;
+  bottomColor?: string;
+  intensity?: number;
+  rotationSpeed?: number;
+  interactive?: boolean;
+  className?: string;
+  glowAmount?: number;
+  pillarWidth?: number;
+  pillarHeight?: number;
+  noiseIntensity?: number;
+  mixBlendMode?: React.CSSProperties['mixBlendMode'];
+  pillarRotation?: number;
+  quality?: 'low' | 'medium' | 'high';
 }
 
-const int OCTAVES = 4;
-float fbm(vec2 p) {
-  float value = 0.0;
-  float amp = 1.0;
-  float freq = waveFrequency;
-  for (int i = 0; i < OCTAVES; i++) {
-    value += amp * abs(cnoise(p));
-    p *= freq;
-    amp *= waveAmplitude;
-  }
-  return value;
-}
+const LightPillar: React.FC<LightPillarProps> = ({
+  topColor = '#5227FF',
+  bottomColor = '#FF9FFC',
+  intensity = 1.0,
+  rotationSpeed = 0.3,
+  interactive = false,
+  className = '',
+  glowAmount = 0.005,
+  pillarWidth = 3.0,
+  pillarHeight = 0.4,
+  noiseIntensity = 0.5,
+  mixBlendMode = 'screen',
+  pillarRotation = 0,
+  quality = 'high'
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
+  const geometryRef = useRef<THREE.PlaneGeometry | null>(null);
+  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2(0, 0));
+  const timeRef = useRef(0);
+  const rotationSpeedRef = useRef(rotationSpeed);
+  const [webGLSupported, setWebGLSupported] = useState<boolean>(true);
 
-float pattern(vec2 p) {
-  vec2 p2 = p - time * waveSpeed;
-  return fbm(p + fbm(p2)); 
-}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / resolution.xy;
-  uv -= 0.5;
-  uv.x *= resolution.x / resolution.y;
-  float f = pattern(uv);
-  if (enableMouseInteraction == 1) {
-    vec2 mouseNDC = (mousePos / resolution - 0.5) * vec2(1.0, -1.0);
-    mouseNDC.x *= resolution.x / resolution.y;
-    float dist = length(uv - mouseNDC);
-    float effect = 1.0 - smoothstep(0.0, mouseRadius, dist);
-    f -= 0.5 * effect;
-  }
-  vec3 col = mix(vec3(0.0), waveColor, f);
-  gl_FragColor = vec4(col, 1.0);
-}
-`;
-
-const ditherFragmentShader = `
-precision highp float;
-uniform float colorNum;
-uniform float pixelSize;
-const float bayerMatrix8x8[64] = float[64](
-  0.0/64.0, 48.0/64.0, 12.0/64.0, 60.0/64.0,  3.0/64.0, 51.0/64.0, 15.0/64.0, 63.0/64.0,
-  32.0/64.0,16.0/64.0, 44.0/64.0, 28.0/64.0, 35.0/64.0,19.0/64.0, 47.0/64.0, 31.0/64.0,
-  8.0/64.0, 56.0/64.0,  4.0/64.0, 52.0/64.0, 11.0/64.0,59.0/64.0,  7.0/64.0, 55.0/64.0,
-  40.0/64.0,24.0/64.0, 36.0/64.0, 20.0/64.0, 43.0/64.0,27.0/64.0, 39.0/64.0, 23.0/64.0,
-  2.0/64.0, 50.0/64.0, 14.0/64.0, 62.0/64.0,  1.0/64.0,49.0/64.0, 13.0/64.0, 61.0/64.0,
-  34.0/64.0,18.0/64.0, 46.0/64.0, 30.0/64.0, 33.0/64.0,17.0/64.0, 45.0/64.0, 29.0/64.0,
-  10.0/64.0,58.0/64.0,  6.0/64.0, 54.0/64.0,  9.0/64.0,57.0/64.0,  5.0/64.0, 53.0/64.0,
-  42.0/64.0,26.0/64.0, 38.0/64.0, 22.0/64.0, 41.0/64.0,25.0/64.0, 37.0/64.0, 21.0/64.0
-);
-
-vec3 dither(vec2 uv, vec3 color) {
-  vec2 scaledCoord = floor(uv * resolution / pixelSize);
-  int x = int(mod(scaledCoord.x, 8.0));
-  int y = int(mod(scaledCoord.y, 8.0));
-  float threshold = bayerMatrix8x8[y * 8 + x] - 0.25;
-  float step = 1.0 / (colorNum - 1.0);
-  color += threshold * step;
-  float bias = 0.2;
-  color = clamp(color - bias, 0.0, 1.0);
-  return floor(color * (colorNum - 1.0) + 0.5) / (colorNum - 1.0);
-}
-
-void mainImage(in vec4 inputColor, in vec2 uv, out vec4 outputColor) {
-  vec2 normalizedPixelSize = pixelSize / resolution;
-  vec2 uvPixel = normalizedPixelSize * floor(uv / normalizedPixelSize);
-  vec4 color = texture2D(inputBuffer, uvPixel);
-  color.rgb = dither(uv, color.rgb);
-  outputColor = color;
-}
-`;
-
-class RetroEffectImpl extends Effect {
-  public uniforms: Map<string, THREE.Uniform<any>>;
-  constructor() {
-    const uniforms = new Map<string, THREE.Uniform<any>>([
-      ['colorNum', new THREE.Uniform(4.0)],
-      ['pixelSize', new THREE.Uniform(2.0)]
-    ]);
-    super('RetroEffect', ditherFragmentShader, { uniforms });
-    this.uniforms = uniforms;
-  }
-  set colorNum(value: number) {
-    this.uniforms.get('colorNum')!.value = value;
-  }
-  get colorNum(): number {
-    return this.uniforms.get('colorNum')!.value;
-  }
-  set pixelSize(value: number) {
-    this.uniforms.get('pixelSize')!.value = value;
-  }
-  get pixelSize(): number {
-    return this.uniforms.get('pixelSize')!.value;
-  }
-}
-
-const RetroEffect = forwardRef<RetroEffectImpl, { colorNum: number; pixelSize: number }>((props, ref) => {
-  const { colorNum, pixelSize } = props;
-  const WrappedRetroEffect = wrapEffect(RetroEffectImpl);
-  return <WrappedRetroEffect ref={ref} colorNum={colorNum} pixelSize={pixelSize} />;
-});
-
-RetroEffect.displayName = 'RetroEffect';
-
-interface WaveUniforms {
-  [key: string]: THREE.Uniform<any>;
-  time: THREE.Uniform<number>;
-  resolution: THREE.Uniform<THREE.Vector2>;
-  waveSpeed: THREE.Uniform<number>;
-  waveFrequency: THREE.Uniform<number>;
-  waveAmplitude: THREE.Uniform<number>;
-  waveColor: THREE.Uniform<THREE.Color>;
-  mousePos: THREE.Uniform<THREE.Vector2>;
-  enableMouseInteraction: THREE.Uniform<number>;
-  mouseRadius: THREE.Uniform<number>;
-}
-
-interface DitheredWavesProps {
-  waveSpeed: number;
-  waveFrequency: number;
-  waveAmplitude: number;
-  waveColor: [number, number, number];
-  colorNum: number;
-  pixelSize: number;
-  disableAnimation: boolean;
-  enableMouseInteraction: boolean;
-  mouseRadius: number;
-}
-
-function DitheredWaves({
-  waveSpeed,
-  waveFrequency,
-  waveAmplitude,
-  waveColor,
-  colorNum,
-  pixelSize,
-  disableAnimation,
-  enableMouseInteraction,
-  mouseRadius
-}: DitheredWavesProps) {
-  const mesh = useRef<THREE.Mesh>(null);
-  const mouseRef = useRef(new THREE.Vector2());
-  const { viewport, size, gl } = useThree();
-
-  const waveUniformsRef = useRef<WaveUniforms>({
-    time: new THREE.Uniform(0),
-    resolution: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    waveSpeed: new THREE.Uniform(waveSpeed),
-    waveFrequency: new THREE.Uniform(waveFrequency),
-    waveAmplitude: new THREE.Uniform(waveAmplitude),
-    waveColor: new THREE.Uniform(new THREE.Color(...waveColor)),
-    mousePos: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    enableMouseInteraction: new THREE.Uniform(enableMouseInteraction ? 1 : 0),
-    mouseRadius: new THREE.Uniform(mouseRadius)
-  });
+  // Check WebGL support
+  useEffect(() => {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) {
+      setWebGLSupported(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const dpr = gl.getPixelRatio();
-    const newWidth = Math.floor(size.width * dpr);
-    const newHeight = Math.floor(size.height * dpr);
-    const currentRes = waveUniformsRef.current.resolution.value;
-    if (currentRes.x !== newWidth || currentRes.y !== newHeight) {
-      currentRes.set(newWidth, newHeight);
+    if (!containerRef.current || !webGLSupported) return;
+
+    const container = containerRef.current;
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isLowEndDevice = isMobile || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4);
+
+    let effectiveQuality = quality;
+    if (isLowEndDevice && quality === 'high') effectiveQuality = 'medium';
+    if (isMobile && quality !== 'low') effectiveQuality = 'low';
+
+    const qualitySettings = {
+      low: { iterations: 24, waveIterations: 1, pixelRatio: 0.5, precision: 'mediump', stepMultiplier: 1.5 },
+      medium: { iterations: 40, waveIterations: 2, pixelRatio: 0.65, precision: 'mediump', stepMultiplier: 1.2 },
+      high: {
+        iterations: 80,
+        waveIterations: 4,
+        pixelRatio: Math.min(window.devicePixelRatio, 2),
+        precision: 'highp',
+        stepMultiplier: 1.0
+      }
+    };
+
+    const settings = qualitySettings[effectiveQuality] || qualitySettings.medium;
+
+    // Scene setup
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    cameraRef.current = camera;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: false,
+        alpha: true,
+        powerPreference: effectiveQuality === 'low' ? 'low-power' : 'high-performance',
+        precision: settings.precision,
+        stencil: false,
+        depth: false
+      });
+    } catch (error) {
+      console.error('Failed to create WebGL renderer:', error);
+      setWebGLSupported(false);
+      return;
     }
-  }, [size, gl]);
 
-  const prevColor = useRef([...waveColor]);
-  useFrame(({ clock }) => {
-    const u = waveUniformsRef.current;
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(settings.pixelRatio);
+    container.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
-    if (!disableAnimation) {
-      u.time.value = clock.getElapsedTime();
+    // Convert hex colors to RGB
+    const parseColor = (hex: string): THREE.Vector3 => {
+      const color = new THREE.Color(hex);
+      return new THREE.Vector3(color.r, color.g, color.b);
+    };
+
+    // Shader material
+    const vertexShader = `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      uniform float uTime;
+      uniform vec2 uResolution;
+      uniform vec2 uMouse;
+      uniform vec3 uTopColor;
+      uniform vec3 uBottomColor;
+      uniform float uIntensity;
+      uniform bool uInteractive;
+      uniform float uGlowAmount;
+      uniform float uPillarWidth;
+      uniform float uPillarHeight;
+      uniform float uNoiseIntensity;
+      uniform float uPillarRotation;
+      uniform float uRotCos;
+      uniform float uRotSin;
+      uniform float uPillarRotCos;
+      uniform float uPillarRotSin;
+      uniform float uWaveSin[4];
+      uniform float uWaveCos[4];
+      varying vec2 vUv;
+
+      const float PI = 3.141592653589793;
+      const float EPSILON = 0.001;
+      const float E = 2.71828182845904523536;
+
+      float noise(vec2 coord) {
+        vec2 r = (E * sin(E * coord));
+        return fract(r.x * r.y * (1.0 + coord.x));
+      }
+
+      void main() {
+        vec2 fragCoord = vUv * uResolution;
+        vec2 uv = (fragCoord * 2.0 - uResolution) / uResolution.y;
+        
+        // Apply 2D rotation to UV coordinates using pre-computed values
+        uv = vec2(
+          uv.x * uPillarRotCos - uv.y * uPillarRotSin,
+          uv.x * uPillarRotSin + uv.y * uPillarRotCos
+        );
+
+        vec3 origin = vec3(0.0, 0.0, -10.0);
+        vec3 direction = normalize(vec3(uv, 1.0));
+
+        float maxDepth = 50.0;
+        float depth = 0.1;
+
+        // Use pre-computed rotation values (or mouse-based)
+        float rotCos = uRotCos;
+        float rotSin = uRotSin;
+        if(uInteractive && length(uMouse) > 0.0) {
+          float mouseAngle = uMouse.x * PI * 2.0;
+          rotCos = cos(mouseAngle);
+          rotSin = sin(mouseAngle);
+        }
+
+        vec3 color = vec3(0.0);
+        
+        const int ITERATIONS = ${settings.iterations};
+        const int WAVE_ITERATIONS = ${settings.waveIterations};
+        const float STEP_MULT = ${settings.stepMultiplier.toFixed(1)};
+        
+        for(int i = 0; i < ITERATIONS; i++) {
+          vec3 pos = origin + direction * depth;
+          
+          // Inline rotation: pos.xz *= rotMat
+          float newX = pos.x * rotCos - pos.z * rotSin;
+          float newZ = pos.x * rotSin + pos.z * rotCos;
+          pos.x = newX;
+          pos.z = newZ;
+
+          // Apply vertical scaling and wave deformation
+          vec3 deformed = pos;
+          deformed.y *= uPillarHeight;
+          deformed = deformed + vec3(0.0, uTime, 0.0);
+          
+          // Inlined wave deformation
+          float frequency = 1.0;
+          float amplitude = 1.0;
+          for(int j = 0; j < WAVE_ITERATIONS; j++) {
+            // Inline rotation: deformed.xz *= rot(0.4) using pre-computed
+            float wx = deformed.x * uWaveCos[j] - deformed.z * uWaveSin[j];
+            float wz = deformed.x * uWaveSin[j] + deformed.z * uWaveCos[j];
+            deformed.x = wx;
+            deformed.z = wz;
+            
+            float phase = uTime * float(j) * 2.0;
+            vec3 oscillation = cos(deformed.zxy * frequency - phase);
+            deformed += oscillation * amplitude;
+            frequency *= 2.0;
+            amplitude *= 0.5;
+          }
+          
+          // Calculate distance field using cosine pattern
+          vec2 cosinePair = cos(deformed.xz);
+          float fieldDistance = length(cosinePair) - 0.2;
+          
+          // Radial boundary constraint (inlined blendMax)
+          float radialBound = length(pos.xz) - uPillarWidth;
+          float k = 4.0;
+          float h = max(k - abs(-radialBound - (-fieldDistance)), 0.0);
+          fieldDistance = -(min(-radialBound, -fieldDistance) - h * h * 0.25 / k);
+          
+          fieldDistance = abs(fieldDistance) * 0.15 + 0.01;
+
+          vec3 gradient = mix(uBottomColor, uTopColor, smoothstep(15.0, -15.0, pos.y));
+          color += gradient / fieldDistance;
+
+          if(fieldDistance < EPSILON || depth > maxDepth) break;
+          depth += fieldDistance * STEP_MULT;
+        }
+
+        // Normalize by pillar width to maintain consistent glow regardless of size
+        float widthNormalization = uPillarWidth / 3.0;
+        color = tanh(color * uGlowAmount / widthNormalization);
+        
+        // Add noise postprocessing
+        float rnd = noise(gl_FragCoord.xy);
+        color -= rnd / 15.0 * uNoiseIntensity;
+        
+        gl_FragColor = vec4(color * uIntensity, 1.0);
+      }
+    `;
+
+    // Pre-compute wave rotation values
+    const waveAngle = 0.4;
+    const waveSinValues = new Float32Array(4);
+    const waveCosValues = new Float32Array(4);
+    for (let i = 0; i < 4; i++) {
+      waveSinValues[i] = Math.sin(waveAngle);
+      waveCosValues[i] = Math.cos(waveAngle);
     }
 
-    if (u.waveSpeed.value !== waveSpeed) u.waveSpeed.value = waveSpeed;
-    if (u.waveFrequency.value !== waveFrequency) u.waveFrequency.value = waveFrequency;
-    if (u.waveAmplitude.value !== waveAmplitude) u.waveAmplitude.value = waveAmplitude;
+    // Pre-compute pillar rotation
+    const pillarRotRad = (pillarRotation * Math.PI) / 180.0;
+    const pillarRotCos = Math.cos(pillarRotRad);
+    const pillarRotSin = Math.sin(pillarRotRad);
 
-    if (!prevColor.current.every((v, i) => v === waveColor[i])) {
-      u.waveColor.value.set(...waveColor);
-      prevColor.current = [...waveColor];
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uResolution: { value: new THREE.Vector2(width, height) },
+        uMouse: { value: mouseRef.current },
+        uTopColor: { value: parseColor(topColor) },
+        uBottomColor: { value: parseColor(bottomColor) },
+        uIntensity: { value: intensity },
+        uInteractive: { value: interactive },
+        uGlowAmount: { value: glowAmount },
+        uPillarWidth: { value: pillarWidth },
+        uPillarHeight: { value: pillarHeight },
+        uNoiseIntensity: { value: noiseIntensity },
+        uPillarRotation: { value: pillarRotation },
+        uRotCos: { value: 1.0 },
+        uRotSin: { value: 0.0 },
+        uPillarRotCos: { value: pillarRotCos },
+        uPillarRotSin: { value: pillarRotSin },
+        uWaveSin: { value: waveSinValues },
+        uWaveCos: { value: waveCosValues }
+      },
+      transparent: true,
+      depthWrite: false,
+      depthTest: false
+    });
+    materialRef.current = material;
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    geometryRef.current = geometry;
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    // Mouse interaction - throttled for performance
+    let mouseMoveTimeout: number | null = null;
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!interactive) return;
+
+      if (mouseMoveTimeout) return;
+
+      mouseMoveTimeout = window.setTimeout(() => {
+        mouseMoveTimeout = null;
+      }, 16); // ~60fps throttle
+
+      const rect = container.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      mouseRef.current.set(x, y);
+    };
+
+    if (interactive) {
+      container.addEventListener('mousemove', handleMouseMove, { passive: true });
     }
 
-    u.enableMouseInteraction.value = enableMouseInteraction ? 1 : 0;
-    u.mouseRadius.value = mouseRadius;
+    // Animation loop with fixed timestep
+    let lastTime = performance.now();
+    const targetFPS = effectiveQuality === 'low' ? 30 : 60;
+    const frameTime = 1000 / targetFPS;
 
-    if (enableMouseInteraction) {
-      u.mousePos.value.copy(mouseRef.current);
-    }
-  });
+    const animate = (currentTime: number) => {
+      if (!materialRef.current || !rendererRef.current || !sceneRef.current || !cameraRef.current) return;
 
-  const handlePointerMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!enableMouseInteraction) return;
-    const rect = gl.domElement.getBoundingClientRect();
-    const dpr = gl.getPixelRatio();
-    mouseRef.current.set((e.clientX - rect.left) * dpr, (e.clientY - rect.top) * dpr);
-  };
+      const deltaTime = currentTime - lastTime;
 
-  return (
-    <>
-      <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <shaderMaterial
-          vertexShader={waveVertexShader}
-          fragmentShader={waveFragmentShader}
-          uniforms={waveUniformsRef.current}
-        />
-      </mesh>
+      if (deltaTime >= frameTime) {
+        timeRef.current += 0.016 * rotationSpeedRef.current;
+        materialRef.current.uniforms.uTime.value = timeRef.current;
 
-      <EffectComposer>
-        <RetroEffect colorNum={colorNum} pixelSize={pixelSize} />
-      </EffectComposer>
+        // Pre-compute rotation on CPU
+        const rotAngle = timeRef.current * 0.3;
+        materialRef.current.uniforms.uRotCos.value = Math.cos(rotAngle);
+        materialRef.current.uniforms.uRotSin.value = Math.sin(rotAngle);
 
-      <mesh
-        onPointerMove={handlePointerMove}
-        position={[0, 0, 0.01]}
-        scale={[viewport.width, viewport.height, 1]}
-        visible={false}
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        lastTime = currentTime - (deltaTime % frameTime);
+      }
+
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+
+    // Handle resize with debouncing
+    let resizeTimeout: number | null = null;
+    const handleResize = () => {
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+
+      resizeTimeout = window.setTimeout(() => {
+        if (!rendererRef.current || !materialRef.current || !containerRef.current) return;
+        const newWidth = containerRef.current.clientWidth;
+        const newHeight = containerRef.current.clientHeight;
+        rendererRef.current.setSize(newWidth, newHeight);
+        materialRef.current.uniforms.uResolution.value.set(newWidth, newHeight);
+      }, 150);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (interactive) {
+        container.removeEventListener('mousemove', handleMouseMove);
+      }
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        rendererRef.current.forceContextLoss();
+        if (container.contains(rendererRef.current.domElement)) {
+          container.removeChild(rendererRef.current.domElement);
+        }
+      }
+      if (materialRef.current) {
+        materialRef.current.dispose();
+      }
+      if (geometryRef.current) {
+        geometryRef.current.dispose();
+      }
+
+      rendererRef.current = null;
+      materialRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
+      geometryRef.current = null;
+      rafRef.current = null;
+    };
+  }, [webGLSupported, quality]);
+
+  useEffect(() => {
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationSpeed]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    const parseColor = (hex: string) => {
+      const color = new THREE.Color(hex);
+      return new THREE.Vector3(color.r, color.g, color.b);
+    };
+    materialRef.current.uniforms.uTopColor.value = parseColor(topColor);
+  }, [topColor]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    const parseColor = (hex: string) => {
+      const color = new THREE.Color(hex);
+      return new THREE.Vector3(color.r, color.g, color.b);
+    };
+    materialRef.current.uniforms.uBottomColor.value = parseColor(bottomColor);
+  }, [bottomColor]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uIntensity.value = intensity;
+  }, [intensity]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uInteractive.value = interactive;
+  }, [interactive]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uGlowAmount.value = glowAmount;
+  }, [glowAmount]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uPillarWidth.value = pillarWidth;
+  }, [pillarWidth]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uPillarHeight.value = pillarHeight;
+  }, [pillarHeight]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    materialRef.current.uniforms.uNoiseIntensity.value = noiseIntensity;
+  }, [noiseIntensity]);
+
+  useEffect(() => {
+    if (!materialRef.current) return;
+    const pillarRotRad = (pillarRotation * Math.PI) / 180;
+    materialRef.current.uniforms.uPillarRotCos.value = Math.cos(pillarRotRad);
+    materialRef.current.uniforms.uPillarRotSin.value = Math.sin(pillarRotRad);
+  }, [pillarRotation]);
+
+  if (!webGLSupported) {
+    return (
+      <div
+        className={`w-full h-full absolute top-0 left-0 flex items-center justify-center bg-black/10 text-gray-500 text-sm ${className}`}
+        style={{ mixBlendMode }}
       >
-        <planeGeometry args={[1, 1]} />
-        <meshBasicMaterial transparent opacity={0} />
-      </mesh>
-    </>
-  );
-}
+        WebGL not supported
+      </div>
+    );
+  }
 
-interface DitherProps {
-  waveSpeed?: number;
-  waveFrequency?: number;
-  waveAmplitude?: number;
-  waveColor?: [number, number, number];
-  colorNum?: number;
-  pixelSize?: number;
-  disableAnimation?: boolean;
-  enableMouseInteraction?: boolean;
-  mouseRadius?: number;
-}
-
-export default function Dither({
-  waveSpeed = 0.05,
-  waveFrequency = 3,
-  waveAmplitude = 0.3,
-  waveColor = [0.5, 0.5, 0.5],
-  colorNum = 4,
-  pixelSize = 2,
-  disableAnimation = false,
-  enableMouseInteraction = true,
-  mouseRadius = 1
-}: DitherProps) {
   return (
-    <Canvas
-      className="dither-container"
-      camera={{ position: [0, 0, 6] }}
-      dpr={1}
-      gl={{ antialias: true, preserveDrawingBuffer: true }}
-    >
-      <DitheredWaves
-        waveSpeed={waveSpeed}
-        waveFrequency={waveFrequency}
-        waveAmplitude={waveAmplitude}
-        waveColor={waveColor}
-        colorNum={colorNum}
-        pixelSize={pixelSize}
-        disableAnimation={disableAnimation}
-        enableMouseInteraction={enableMouseInteraction}
-        mouseRadius={mouseRadius}
-      />
-    </Canvas>
+    <div ref={containerRef} className={`w-full h-full absolute top-0 left-0 ${className}`} style={{ mixBlendMode }} />
   );
-}
+};
+
+export default LightPillar;

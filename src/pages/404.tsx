@@ -15,7 +15,7 @@ const NotFound = () => {
 
         {/* IMAGE LEFT (desktop), TOP (mobile) */}
         <img
-          src="/london.png"
+          src="/light.png"
           alt="London Tower"
           className="
             w-56 md:w-80
@@ -30,12 +30,12 @@ const NotFound = () => {
 
           {/* TITLE */}
           <h1 className="text-white text-4xl md:text-5xl font-semibold mb-4 tracking-tight">
-            Page Not Found
+            404 - Sayfa Bulunamadı
           </h1>
 
           {/* DESCRIPTION */}
           <p className="text-white/60 text-sm md:text-base max-w-md mb-8 leading-relaxed">
-            The page you're looking for doesn’t exist or may have been moved.
+            Aradığınız sayfa mevcut değil veya taşınmış olabilir.
           </p>
 
           {/* BUTTON */}
@@ -48,7 +48,7 @@ const NotFound = () => {
             "
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            Anasayfa
           </a>
 
         </div>

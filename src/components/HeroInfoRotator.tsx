@@ -2,10 +2,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
 const messages = [
-  { emoji: "🌍", text: "We reached over 10 million people worldwide." },
-  { emoji: "🚀", text: "Expanded from Europe into Asia and the Americas in 2026." },
-  { emoji: "🤝", text: "Partnered with more than 5 global brands." },
-  { emoji: "🏆", text: "Operating across 10+ diverse industry sectors." }
+  { emoji: "", text: "Türkiye’nin farklı şehirlerinde aktif projeler" },
+  { emoji: "", text: "6+ ana enerji çözüm alanında uzmanlık" },
+  { emoji: "", text: "%100 zamanında ve kazasız teslim edilen projeler" },
+  { emoji: "", text: "Uluslararası standartlara uygun mühendislik çözümleri" }
 ];
 
 const HeroInfoRotator = () => {
@@ -26,16 +26,16 @@ const HeroInfoRotator = () => {
       className="
         mt-8
         mx-auto
-        w-[70%] md:w-full
+        w-[70%] md:w-[90%]
         max-w-md md:max-w-lg
-        rounded-xl
+        rounded-2xl
         bg-white/5 backdrop-blur-xl
         border border-white/10
         p-2 md:p-3
         shadow-xl
         text-center
         relative z-10
-        h-40px md:h-[50px]
+        h-48px md:h-[50px]
         flex items-center justify-center
       "
     >

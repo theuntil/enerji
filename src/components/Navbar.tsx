@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
-import LogoImg from "/rovand_logo.png";
+import LogoImg from "/geceroglu.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const navigation = [
-    { name: "Home", href: "/" },
-    { name: "About Us", href: "/about" },
-    { name: "Policies", href: "/policies" },
+    { name: "Anasayfa", href: "/" },
+    { name: "Hizmetlerimiz", href: "/hizmetlerimiz" },
+    { name: "Hakkımızda", href: "/hakkimizda" },
   ];
 
   useEffect(() => {
@@ -59,7 +59,7 @@ const Navbar = () => {
     <img
       src={LogoImg}
       alt="Logo"
-      className="h-4 ml-5 w-auto object-contain cursor-pointer"
+      className="h-8 ml-5 w-auto object-contain cursor-pointer"
     />
   </a>
               {/* DESKTOP LINKS */}
@@ -78,11 +78,11 @@ const Navbar = () => {
 
               {/* DESKTOP CTA */}
               <a
-                href="/contact"
+                href="/iletisim"
                 className="hidden md:flex rounded-full bg-white/10 border border-white/10 text-white
                            hover:bg-white/30 transition px-4.5 py-2.5 text-sm shadow"
               >
-                Contact Us
+                İletişime Geç
               </a>
 
               {/* MOBILE MENU BUTTON */}
@@ -126,11 +126,11 @@ const Navbar = () => {
               <hr className="my-4 border-white/10" />
 
               <a
-                href="/contact"
+                href="/iletisim"
                 className="rounded-xl bg-white text-black hover:bg-white/90 
                            px-4 py-2.5 text-xs font-semibold w-full block text-center"
               >
-                Contact Us
+                İletişime Geç
               </a>
 
             </div>

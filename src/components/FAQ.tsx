@@ -6,57 +6,52 @@ type FAQ = {
   answer: string;
 };
 
-// 9 adet soru — hepsi tek listede
+// PDF'ye %100 sadık SSS
 const faqs: FAQ[] = [
-  // Hero SSS 1
   {
-    question: "Is the app free to use?",
+    question: "Geçeroğlu Enerji hangi alanlarda hizmet vermektedir?",
     answer:
-      "Yes! Our app includes a free plan with essential tools. You can upgrade anytime for AI insights, analytics, and premium features.",
+      "Firmamız; orta gerilim sistemleri, güneş enerji santralleri, trafo merkezleri, enerji nakil hatları ve çevre & yol aydınlatma sistemleri gibi alanlarda uzmanlaşmıştır.",
   },
   {
-    question: "Do you support iOS and Android?",
+    question: "Şirket ne zaman kurulmuştur?",
     answer:
-      "Absolutely — the app is available on both App Store and Google Play, fully optimized for all device types.",
+      "Geçeroğlu Enerji, 2023 yılında kurulmuş olup kısa sürede Türkiye'nin farklı şehirlerinde faaliyet gösteren bir firma haline gelmiştir.",
   },
   {
-    question: "Can I sync my data across devices?",
+    question: "Şirketin merkezi nerededir?",
     answer:
-      "Yes. Your data automatically syncs securely across any device logged into your account.",
-  },
-
-  // E-commerce SSS 2
-  {
-    question: "Which payment methods do you accept?",
-    answer:
-      "We accept Visa, MasterCard, PayPal, Apple Pay, Google Pay, and several region-specific payment options.",
+      "Firmamız, Ankara merkezli olup Türkiye genelinde projelerini yürütmektedir.",
   },
   {
-    question: "How long does shipping take?",
+    question: "Güneş enerji santrali hizmeti veriyor musunuz?",
     answer:
-      "Orders are processed within 24 hours. Delivery typically takes between 3–7 business days.",
+      "Evet, güneş enerji santrallerinin kurulumu, projelendirilmesi ve devreye alınması dahil tüm süreçlerde anahtar teslim hizmet sunmaktayız.",
   },
   {
-    question: "Can I return a product?",
+    question: "Projelerde hangi standartlar uygulanmaktadır?",
     answer:
-      "Yes — returns are accepted within 14 days of delivery as long as items remain unused and in original packaging.",
-  },
-
-  // Yazılım Geliştirme Ajansı SSS 3
-  {
-    question: "What services does your development team offer?",
-    answer:
-      "We provide mobile development, web development, UI/UX, branding, AI integrations, and enterprise software solutions.",
+      "Projelerimizde IEC standartları ve TEİAŞ teknik şartnameleri başta olmak üzere uluslararası kalite ve güvenlik standartları uygulanmaktadır.",
   },
   {
-    question: "Do you work on long-term custom software projects?",
+    question: "Projelerinizde iş güvenliği ve teslim süreci nasıldır?",
     answer:
-      "Yes — we work with startups and enterprises for both short-term and multi-year development cycles.",
+      "Tüm projelerimiz iş güvenliği kurallarına uygun şekilde yürütülmekte olup, tamamlanan işler zamanında ve kazasız şekilde teslim edilmektedir.",
   },
   {
-    question: "Do you offer maintenance after launch?",
+    question: "Uluslararası firmalarla çalışıyor musunuz?",
     answer:
-      "Absolutely. Every project includes a support window, with extended maintenance packages available.",
+      "Evet, uzman mühendis ve teknik kadromuz ile uluslararası firmaların elektrik uygulamalarında çözüm ortağı olarak hizmet vermekteyiz.",
+  },
+  {
+    question: "Enerji nakil hatları hizmetiniz neleri kapsar?",
+    answer:
+      "Enerji nakil hatlarında projelendirme, malzeme temini, direk montajı ve hat kurulumu dahil anahtar teslim çözümler sunmaktayız.",
+  },
+  {
+    question: "Hangi tür projelerde hizmet veriyorsunuz?",
+    answer:
+      "Otel, hastane, konut, iş merkezleri ve endüstriyel tesisler gibi birçok farklı projede elektrik ve enerji çözümleri sunmaktayız.",
   },
 ];
 
@@ -75,7 +70,6 @@ const FAQItem = ({
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState("0px");
 
-  // Height hesaplama
   useEffect(() => {
     if (ref.current) {
       setHeight(isOpen ? `${ref.current.scrollHeight}px` : "0px");
@@ -83,35 +77,39 @@ const FAQItem = ({
   }, [isOpen]);
 
   return (
-  <div
-  className="
-    bg-[#000000]
-    border border-white/10
-    rounded-2xl
-    px-8 py-6
-    min-h-[72px]
-    cursor-pointer
-    transition
-  "     onClick={onToggle}
+    <div
+      className="
+        bg-black
+        border border-white/10
+        rounded-2xl
+        px-8 py-6
+        min-h-[72px]
+        cursor-pointer
+        transition
+      "
+      onClick={onToggle}
     >
-      {/* Question Row */}
+      {/* Question */}
       <div className="flex items-center justify-between">
-        <span className="text-white text-[14px] text-light ">{q}</span>
+        <span className="text-white text-[14px] font-light">{q}</span>
 
         <ChevronDown
           size={20}
-          className={`text-white/70 transform transition-transform duration-300 ${
+          className={`text-white/70 transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </div>
 
-      {/* Smooth expandable content */}
+      {/* Answer */}
       <div
         className="overflow-hidden transition-all duration-300"
         style={{ height }}
       >
-        <div ref={ref} className="mt-3 text-white/60 text-[14px] leading-relaxed pb-2">
+        <div
+          ref={ref}
+          className="mt-3 text-white/60 text-[14px] leading-relaxed pb-2"
+        >
           {a}
         </div>
       </div>
@@ -127,10 +125,10 @@ const FAQSection = () => {
       {/* TITLE */}
       <div className="max-w-[1000px] mx-auto text-center">
         <h2 className="text-white text-3xl font-light">
-          Frequently Asked Questions
+          Sıkça Sorulan Sorular
         </h2>
         <p className="text-white/80 mt-2 text-[13px]">
-          Find everything you need to know.
+          Hizmetlerimiz hakkında merak edilenler
         </p>
       </div>
 

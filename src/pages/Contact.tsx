@@ -1,20 +1,18 @@
 import { useState } from "react";
 import { Send, CheckCircle2, AlertCircle } from "lucide-react";
 
-const brands = ["Terra", "CallAI", "Seller (Amazon)", "Seller (Shopify)", "Other"];
-
+// Hizmet konuları (PDF'ye uygun)
 const subjects = [
-  "Partnership Inquiry",
-  "Customer Support",
-  "Investor / Partnership",
-  "Technical Support",
-  "Billing & Payments",
-  "Other",
+  "Proje Talebi",
+  "Teklif Talebi",
+  "Teknik Destek",
+  "İş Ortaklığı",
+  "Genel Bilgi",
+  "Diğer",
 ];
 
 const Contact = () => {
   const [form, setForm] = useState({
-    brand: "",
     name: "",
     email: "",
     topic: "",
@@ -34,10 +32,10 @@ const Contact = () => {
   const validate = () => {
     let newErrors: any = {};
 
-    if (!form.name.trim()) newErrors.name = "Full name is required.";
-    if (!form.email.trim()) newErrors.email = "Email is required.";
-    if (!form.topic.trim()) newErrors.topic = "Please select a topic.";
-    if (!form.message.trim()) newErrors.message = "Message cannot be empty.";
+    if (!form.name.trim()) newErrors.name = "Ad Soyad zorunludur.";
+    if (!form.email.trim()) newErrors.email = "E-posta zorunludur.";
+    if (!form.topic.trim()) newErrors.topic = "Lütfen konu seçiniz.";
+    if (!form.message.trim()) newErrors.message = "Mesaj boş bırakılamaz.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -52,7 +50,6 @@ const Contact = () => {
 
     try {
       const res = await fetch("/api/send-email", {
-
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -60,14 +57,14 @@ const Contact = () => {
 
       if (res.ok) {
         setSuccessPopup(true);
-        setForm({ brand: "", name: "", email: "", topic: "", message: "" });
+        setForm({ name: "", email: "", topic: "", message: "" });
         setErrors({});
         setTimeout(() => setSuccessPopup(false), 3000);
       } else {
-        alert("An error occurred while sending your message.");
+        alert("Mesaj gönderilirken hata oluştu.");
       }
     } catch (error) {
-      alert("Network error.");
+      alert("Bağlantı hatası.");
     }
 
     setLoading(false);
@@ -78,92 +75,62 @@ const Contact = () => {
 
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-16">
 
-        {/* -----------------------------------------------------
-              LEFT SIDE — CONTACT INFO
-        ------------------------------------------------------ */}
+        {/* LEFT SIDE */}
         <div className="flex flex-col gap-6 text-white">
 
-          <h1 className="text-3xl md:text-4xl mt-20  tracking-tight">
-            Contact & Support
+          <h1 className="text-3xl md:text-4xl mt-20 tracking-tight">
+            İletişim
           </h1>
 
           <p className="text-white/60 text-sm leading-relaxed max-w-sm">
-            Need help or want to collaborate with us?  
-            Our support team is here to assist you across all Rovand brands.
+            Projeleriniz, teklif talepleriniz veya teknik destek için bizimle iletişime geçebilirsiniz.
+            Uzman ekibimiz size en kısa sürede dönüş sağlayacaktır.
           </p>
 
           <div className="mt-4 flex flex-col gap-4 text-sm">
 
             <div>
-              <p className="text-white/40 text-xs mb-1">Email</p>
-              <p className="text-white font-medium">contact@rovand.limited</p>
-              <p className="text-white font-medium">ozenshopping.com@gmail.com</p>
-            </div>
-             <div>
-              <p className="text-white/40 text-xs mb-1">Phone UK</p>
-             
-               <p className="text-white font-medium">+44 7365 953883 UK</p>
-            </div>   <div>
-              <p className="text-white/40 text-xs mb-1">Phone TR</p>
-              <p className="text-white font-medium">+90 533 443 49 78 TR</p>
-              
+              <p className="text-white/40 text-xs mb-1">E-Posta</p>
+              <p className="text-white font-medium">iletisim@gecerogluenerji.com</p>
             </div>
 
             <div>
-              <p className="text-white/40 text-xs mb-1">Office Address England</p>
-              <p className="text-white font-medium">
-                71-75 Shelton Street, Covent Garden, London, United Kingdom, WC2H 9JQ
-              </p>
+              <p className="text-white/40 text-xs mb-1">Telefon</p>
+              <p className="text-white font-medium">0532 499 26 47</p>
             </div>
-             <div>
-              <p className="text-white/40 text-xs mb-1">Office Address Türkiye</p>
+
+            <div>
+              <p className="text-white/40 text-xs mb-1">Adres</p>
               <p className="text-white font-medium">
-              38280 Kayseri, Turkey
+                Ahi Mesut Mahallesi 1783 Sok. No:10/A İç Kapı No:3 <br />
+                Etimesgut / Ankara
               </p>
             </div>
 
             <div>
-              <p className="text-white/40 text-xs mb-1">Support Hours</p>
-              <p className="text-white font-medium">Mon – Fri, 09:00–18:00 (GMT)</p>
+              <p className="text-white/40 text-xs mb-1">Çalışma Saatleri</p>
+              <p className="text-white font-medium">
+                Pazartesi – Cuma, 09:00 – 18:00
+              </p>
             </div>
 
           </div>
         </div>
 
-        {/* -----------------------------------------------------
-                    RIGHT SIDE — FORM
-        ----------------------------------- ------------------- */}
+        {/* RIGHT SIDE FORM */}
         <form
           onSubmit={submitForm}
-          className="bg-black border mt-10 border-white/8 backdrop-blur-xl
-                     rounded-2xl p-8 shadow-xl flex flex-col gap-6"
+          className="bg-black border mt-10 border-white/10 rounded-2xl p-8 shadow-xl flex flex-col gap-6"
         >
-          {/* BRAND SELECT (optional) */}
-          <div>
-            <label className="text-white/80 text-sm">Brand (Optional)</label>
-            <select
-              name="brand"
-              value={form.brand}
-              onChange={handleChange}
-              className="mt-2 w-full bg-black/20 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
-            >
-              <option value="">Choose brand</option>
-              {brands.map((b) => (
-                <option key={b} value={b} className="text-black">
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
 
           {/* NAME */}
           <div>
-            <label className="text-white/80 text-sm">Full Name *</label>
+            <label className="text-white/80 text-sm">Ad Soyad *</label>
             <input
               name="name"
               value={form.name}
               onChange={handleChange}
-              placeholder="Your full name"
+              placeholder="Adınız Soyadınız"
               className="mt-2 w-full bg-black/20 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
             />
             {errors.name && (
@@ -175,13 +142,13 @@ const Contact = () => {
 
           {/* EMAIL */}
           <div>
-            <label className="text-white/80 text-sm">Email *</label>
+            <label className="text-white/80 text-sm">E-Posta *</label>
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="your@email.com"
+              placeholder="ornek@mail.com"
               className="mt-2 w-full bg-black/20 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
             />
             {errors.email && (
@@ -193,59 +160,49 @@ const Contact = () => {
 
           {/* TOPIC */}
           <div>
-            <label className="text-white/80 text-sm">Topic *</label>
+            <label className="text-white/80 text-sm">Konu *</label>
             <select
               name="topic"
               value={form.topic}
               onChange={handleChange}
               className="mt-2 w-full bg-black/20 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
             >
-              <option value="">Choose a topic</option>
+              <option value="">Konu seçiniz</option>
               {subjects.map((s) => (
                 <option key={s} value={s} className="text-black">
                   {s}
                 </option>
               ))}
             </select>
-            {errors.topic && (
-              <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                <AlertCircle size={12} /> {errors.topic}
-              </p>
-            )}
           </div>
 
           {/* MESSAGE */}
           <div>
-            <label className="text-white/80 text-sm">Message *</label>
+            <label className="text-white/80 text-sm">Mesaj *</label>
             <textarea
               name="message"
               value={form.message}
               onChange={handleChange}
-              placeholder="Tell us how we can help..."
+              placeholder="Size nasıl yardımcı olabiliriz?"
               className="mt-2 w-full min-h-[130px] bg-black/20 border border-white/20 text-white rounded-xl px-4 py-3 text-sm outline-none"
             />
-            {errors.message && (
-              <p className="text-red-400 text-xs mt-1 flex items-center gap-1">
-                <AlertCircle size={12} /> {errors.message}
-              </p>
-            )}
           </div>
 
-          {/* SUBMIT BUTTON */}
+          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}
             className="
               bg-white text-black font-medium text-sm rounded-full
               py-3 px-6 hover:bg-white/90 transition
-              flex items-center justify-center gap-2 relative
+              flex items-center justify-center gap-2
             "
           >
             {loading ? (
               <span className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                Send Message <Send className="w-4 h-4" />
+                Gönder <Send className="w-4 h-4" />
               </>
             )}
           </button>
@@ -253,18 +210,11 @@ const Contact = () => {
         </form>
       </div>
 
-      {/* -----------------------------------------------------
-                    SUCCESS POPUP (AUTO-HIDE)
-      ------------------------------------------------------ */}
+      {/* SUCCESS */}
       {successPopup && (
-        <div
-          className="
-            fixed bottom-10 right-10 bg-white text-black px-6 py-4 
-            rounded-xl shadow-2xl flex items-center gap-3 animate-slide-in
-          "
-        >
+        <div className="fixed bottom-10 right-10 bg-white text-black px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
           <CheckCircle2 className="w-6 h-6 text-green-600" />
-          <p className="text-sm font-medium">Your message has been sent!</p>
+          <p className="text-sm font-medium">Mesajınız gönderildi!</p>
         </div>
       )}
     </section>

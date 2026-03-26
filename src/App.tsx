@@ -8,6 +8,9 @@ import Policies from "./pages/Policies";
 import NotFound from "./pages/404";
 import Contact from "./pages/Contact";
 import About from "./pages/About";
+import ServiceDetail from "./pages/ServiceDetail";
+import Hizmetlerimiz from "./pages/hizmetlerimiz";
+import ScrollToTop from "./components/ScrollToTop";
 
 // -------------------------
 // Page Transition Wrapper
@@ -34,7 +37,7 @@ const AnimatedRoutes = () => {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+        <ScrollToTop />  <Routes location={location} key={location.pathname}>
         
         <Route
           path="/"
@@ -46,7 +49,7 @@ const AnimatedRoutes = () => {
         />
 
         <Route
-          path="/policies"
+          path="/politikalar"
           element={
             <PageTransition>
               <Policies />
@@ -54,8 +57,17 @@ const AnimatedRoutes = () => {
           }
         />
 
+         <Route
+          path="/hizmetlerimiz"
+          element={
+            <PageTransition>
+              <Hizmetlerimiz />
+            </PageTransition>
+          }
+        />
+ <Route path="/hizmetlerimiz/:id" element={<ServiceDetail />} />
         <Route
-          path="/contact"
+          path="/iletisim"
           element={
             <PageTransition>
               <Contact />
@@ -64,7 +76,7 @@ const AnimatedRoutes = () => {
         />
 
         <Route
-          path="/about"
+          path="/hakkimizda"
           element={
             <PageTransition>
               <About />

@@ -40,7 +40,7 @@ const Policies = () => {
 
   return (
     <section className="w-full bg-black py-16 px-6 text-center">
-      <h2 className="text-white text-2xl mt-40 mb-6">Policies</h2>
+      <h2 className="text-white text-2xl mt-40 mb-6">Politikalar</h2>
 
       {/* Buttons */}
       <div

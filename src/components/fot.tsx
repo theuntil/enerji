@@ -44,9 +44,9 @@ export default function CTASection() {
           "
           style={{ fontFamily: "CTAItalic" }}
         >
-          Build something people
+         Yenilikçi Mühendislik,
           <br />
-          actually want.
+         Güvenilir Enerji
         </motion.h2>
 
         {/* BUTTONS */}
@@ -57,63 +57,22 @@ export default function CTASection() {
           className="mt-10 flex flex-row gap-4 justify-center"
         >
           <a
-            href="/contact"
+            href="/iletisim"
             className="px-6 py-3 rounded-full bg-white text-black text-sm hover:bg-neutral-200 transition"
           >
-            Contact Us
+          İletişime Geçin
           </a>
 
           <a
-            href="/about"
+            href="/hakkimizda"
             className="px-6 py-3 rounded-full  text-white text-sm hover:scale-105 transition"
           >
-            About Us
+            Hakkımızda
           </a>
         </motion.div>
       </motion.div>
 
-      {/* LOGO AREA */}
-      <motion.div
-        ref={containerRef}
-        onMouseMove={handleMove}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          delay: 0.6,
-          duration: 1,
-        }}
-        onAnimationComplete={() => setLightReady(true)}
-        className="relative mt-24 w-full flex justify-center items-center"
-      >
-        {/* LOGO */}
-        <img
-          src="/j.png"
-          alt="logo"
-          className="w-[115%]
-           sm:w-[90%]
-            max-w-none
-            opacity-10
-            select-none
-            pointer-events-none
-          "
-        />
-
-        {/* ✅ SPOTLIGHT FIXED */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: lightReady ? 1 : 0 }}
-          transition={{ duration: 0.6 }}
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(
-              260px circle at ${pos.x}% ${pos.y}%,
-              rgba(255,255,255,0.28),
-              transparent 70%
-            )`,
-            mixBlendMode: "overlay",
-          }}
-        />
-      </motion.div>
+    
     </section>
   );
 }

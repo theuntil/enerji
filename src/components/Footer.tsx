@@ -21,24 +21,13 @@ const Footer = () => {
           {/* LOGO */}
           <div className="flex items-center gap-2">
             <img
-              src="/rovand_logo.png"
-              className="h-5 object-contain opacity-90"
+              src="/geceroglu.png"
+              className="h-10 object-contain opacity-90"
             />
           </div>
 
           {/* COMPANY INFO */}
-          <p className="text-white/50 text-xs leading-relaxed flex items-center gap-2">
-            <a
-              href="https://find-and-update.company-information.service.gov.uk/company/16724239"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-white hover:text-blue-300 transition flex items-center gap-1"
-            >
-              16724239
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </a>
-            <span>Registered in England.</span>
-          </p>
+         
         </div>
 
         {/* ----------------------------------------------------------
@@ -52,7 +41,7 @@ const Footer = () => {
           {/* POLICIES (MODAL TRIGGER) */}
           <div className="flex flex-col gap-4">
             <h4 className="text-white text-sm font-semibold tracking-wide">
-              POLICIES
+              Politikalar
             </h4>
 
             <ul className="flex flex-col gap-2 text-white/60 text-sm">
@@ -73,58 +62,63 @@ const Footer = () => {
         {/* ----------------------------------------------------------
             3) RIGHT COLUMN — APP STORE / PLAY STORE / GALLERY
         ---------------------------------------------------------- */}
-        <div className="flex flex-col gap-4">
+       <div className="flex flex-col gap-4">
+  <div className="flex flex-col gap-4">
+    <h4 className="text-white text-sm font-semibold tracking-wide">
+      Hızlı Bağlantılar
+    </h4>
 
-          <h4 className="text-white text-sm font-semibold tracking-wide mb-2">
-            DOWNLOAD OUR APPS
-          </h4>
+    <ul className="flex flex-col gap-2 text-white/60 text-sm">
+      <li>
+        <a 
+          href="/hakkimizda" 
+          className="hover:text-white transition"
+        >
+          Hakkımızda
+        </a>
+      </li>
 
-          <div className="flex flex-col gap-4">
+      <li>
+        <a 
+          href="/hizmetlerimiz" 
+          className="hover:text-white transition"
+        >
+          Hizmetlerimiz
+        </a>
+      </li>
 
-            {/* APP STORE */}
-            <a
-              href="https://apps.apple.com/us/developer/rovand-ltd/id1877911901"
-              className="w-52 bg-black border  border-white/10 rounded-2xl flex items-center gap-3 py-4 pl-4 shadow-md hover:opacity-90 transition"
-            >
-              <img src="/appstore.png" className="w-7" />
-              <div className="flex flex-col leading-tight text-left">
-                <span className="text-[10px] text-white/70">Download on the</span>
-                <span className="text-[14px] font-semibold text-white">App Store</span>
-              </div>
-            </a>
-
-            {/* GOOGLE PLAY */}
-            <a
-              href="https://play.google.com/store/apps/dev?id=7529641658741841420"
-              className="w-52 bg-black border border-white/10 rounded-2xl flex items-center gap-3 py-4 pl-4 shadow-md hover:opacity-90 transition"
-            >
-              <img src="/googleplay.webp" className="w-7" />
-              <div className="flex flex-col leading-tight text-left">
-                <span className="text-[10px] text-white/70">GET IT ON</span>
-                <span className="text-[14px] font-semibold text-white">Google Play</span>
-              </div>
-            </a>
-
-            {/* APP GALLERY */}
-            <a
-              href="#"
-              className="w-52 bg-black border border-white/10 rounded-2xl flex items-center gap-3 py-4 pl-4 shadow-md hover:opacity-90 transition"
-            >
-              <img src="/appgallery.png" className="w-7" />
-              <div className="flex flex-col leading-tight text-left">
-                <span className="text-[10px] text-white/70">Explore it on</span>
-                <span className="text-[14px] font-semibold text-white">AppGallery</span>
-              </div>
-            </a>
-
-          </div>
-        </div>
+      <li>
+        <a 
+          href="/iletisim" 
+          className="hover:text-white transition"
+        >
+          İletişim
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
       </div>
 
       {/* ------------------ COPYRIGHT ------------------ */}
       <div className="mt-16 text-center text-white/40 text-xs">
-        © {new Date().getFullYear()} Rovand Limited. All rights reserved.
+        © {new Date().getFullYear()} GEÇEROĞLU ENERJİ İNŞAAT
+SAN. VE TİC. LTD. ŞTİ.
       </div>
+      <div className="mt-16 text-center text-white/40 text-xs">
+  <a 
+    href="https://terrasoftware.co" 
+    target="_blank" 
+    rel="noopener noreferrer"
+    className="inline-block opacity-60 hover:opacity-100 transition"
+  >
+    <img 
+      src="/terrayazilim.png"   // public klasörüne koy
+      alt="Terra Yazılım"
+      className="w-13 h-auto mx-auto"
+    />
+  </a>
+</div>
 
       {/* ------------------ MODAL ------------------ */}
       <PolicyModal

@@ -1,22 +1,59 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Users, LineChart } from "lucide-react";
+import {
+  Sun,
+  Zap,
+  Cpu,
+  TowerControl,
+  Lightbulb,
+  ClipboardList
+} from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 const cards = [
   {
-    title: "AI Product Development",
+    title: "Güneş Enerji Santralleri (GES)",
     description:
-      "We design and build intelligent mobile applications powered by AI — from idea validation to scalable production-ready products.",
-    image: "/image2.webp",
-    Icon: Users,
+      "Çevre dostu ve düşük maliyetli enerji üretimi için anahtar teslim güneş enerji santralleri kuruyoruz. Projelendirmeden devreye almaya kadar tüm süreci yöneterek maksimum verimlilik sağlıyoruz.",
+    image: "/33.jpg",
+    Icon: Sun,
   },
   {
-    title: "Automation & AI Systems",
+    title: "Orta Gerilim Sistemleri",
     description:
-      "Streamline operations with custom AI automation systems that optimize workflows, reduce costs, and accelerate business growth.",
-    image: "/image1.webp",
-    Icon: LineChart,
+      "1 kV – 35 kV arası enerji iletim ve dağıtım sistemlerinde projelendirme, kurulum ve devreye alma hizmetleri sunarak güvenli ve kesintisiz enerji altyapıları oluşturuyoruz.",
+    image: "/99.jpg",
+    Icon: Zap,
   },
+  {
+    title: "Trafo Merkezleri",
+    description:
+      "Enerjinin iletim ve dağıtım süreçlerinde kritik rol oynayan trafo merkezlerini, uluslararası standartlara uygun şekilde projelendiriyor ve kurulumunu gerçekleştiriyoruz.",
+    image: "/44.jpg",
+    Icon: Cpu,
+  },
+  {
+    title: "Enerji Nakil Hatları",
+    description:
+      "Elektrik enerjisinin uzun mesafelere güvenli şekilde taşınması için enerji nakil hatlarını projelendiriyor, malzeme temini ve kurulum dahil anahtar teslim çözümler sunuyoruz.",
+    image: "/55.jpg",
+    Icon: TowerControl,
+  },
+  {
+    title: "Çevre ve Yol Aydınlatma Sistemleri",
+    description:
+      "Enerji verimliliğini ön planda tutarak yol, çevre ve dış mekan aydınlatma sistemlerini modern ve tasarruflu çözümlerle hayata geçiriyoruz.",
+    image: "/22.jpg",
+    Icon: Lightbulb,
+  },
+  {
+    title: "Elektrik Taahhüt ve Proje Yönetimi",
+    description:
+      " Otel, hastane, konut ve iş merkezleri gibi projelerde elektrik altyapı sistemlerinin projelendirilmesi, kurulumu ve yönetimini profesyonel şekilde gerçekleştiriyoruz.",
+    image: "/77.png",
+    Icon: ClipboardList,
+  }
 ];
 
 export default function AnalyticsFeatureCards() {
@@ -29,8 +66,8 @@ export default function AnalyticsFeatureCards() {
         {/* PERFECT GRID */}
         <div className="
           grid
-          grid-cols-1
-          lg:grid-cols-2
+          grid-cols-2
+          lg:grid-cols-3
           gap-6 lg:gap-8
           items-stretch
         ">
@@ -129,21 +166,7 @@ export default function AnalyticsFeatureCards() {
       {card.description}
     </p>
 
-    {/* LEARN MORE */}
-    <a
-      href="#"
-      className="
-        inline-block
-        mt-4
-        text-[14px]
-        text-neutral-400
-        transition-colors
-        duration-200
-        hover:text-neutral-200
-      "
-    >
-      Learn more 
-    </a>
+   
 
   </div>
 </div>
@@ -155,6 +178,15 @@ export default function AnalyticsFeatureCards() {
           })}
         </div>
       </div>
+       <div className="mt-5 flex justify-center">
+  <a href="/hizmetlerimiz">
+    <button className="px-6 py-3 rounded-full bg-white text-black text-sm font-medium hover:bg-white/90 transition shadow-lg flex items-center gap-2">
+      Tüm Hizmetlerimiz
+      <ArrowUpRight className="w-4 h-4" />
+    </button>
+  </a>
+</div>
     </section>
+    
   );
 }
