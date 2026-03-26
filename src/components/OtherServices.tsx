@@ -52,7 +52,7 @@ const OtherServices: React.FC<Props> = ({ currentId }) => {
       {/* 🔥 MOBİL BUTON */}
       <div className="mt-10 flex justify-center md:hidden">
         <Link
-          to="/hizmetler"
+          to="/hizmetlerimiz"
           className="px-6 py-3 rounded-full bg-white text-black text-sm font-medium hover:bg-white/90 transition"
         >
           Tüm Hizmetler
