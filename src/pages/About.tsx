@@ -1,5 +1,5 @@
 import { Briefcase, Rocket, Users, Target, Globe2 } from "lucide-react";
-import DomeGallery from "../components/gal";
+import DomeGallery from "../components/gallery";
 
 const About = () => {
   return (
